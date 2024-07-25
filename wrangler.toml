@@ -1,0 +1,8 @@
+name = "scenario-manager-api"
+compatibility_date = "2024-07-21"
+
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "scenario-manager-db"
+database_id = "fc2f2416-acaf-404e-a5e2-9155bb0487ca"
+migrations_dir = "drizzle/migrations"
