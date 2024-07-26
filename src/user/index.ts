@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { users } from '../../db/schema';
 import { buildWhereClause, SearchCondition } from '../SQLCondition';
-import { withUpdatedAt } from '../dbUtils';
+import { withUpdatedAt } from '../utils';
 
 const user = new Hono<{ Bindings: { DB: D1Database } }>();
 
