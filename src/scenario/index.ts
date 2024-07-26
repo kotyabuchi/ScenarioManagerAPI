@@ -33,6 +33,16 @@ scenario
     const res = await db.insert(scenarios).values(user);
     return c.json(res);
   })
+  .post('/:id', async (c) => {
+    const db = drizzle(c.env.DB);
+    const id = await c.req.param('id');
+    const updatedData = await c.req.json<typeof scenarios.$inferInsert>();
+    const res = await db
+      .update(scenarios)
+      .set({ ...updatedData, updatedAt: new Date() })
+      .where(eq(scenarios.id, id));
+    return c.json(res);
+  })
   .delete('/:id', async (c) => {
     const db = drizzle(c.env.DB);
     const id = await c.req.param('id');

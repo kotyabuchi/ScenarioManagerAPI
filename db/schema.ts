@@ -37,8 +37,7 @@ export const users = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
-      .default(sql`(unixepoch())`)
-      .$onUpdate(() => sql`(unixepoch())`),
+      .default(sql`(unixepoch())`),
   },
   (table) => ({
     usersUsernameIdx: index('users_username_idx').on(table.username),
@@ -73,8 +72,7 @@ export const scenarios = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
-      .default(sql`(unixepoch())`)
-      .$onUpdate(() => sql`(unixepoch())`),
+      .default(sql`(unixepoch())`),
   },
   (table) => ({
     scenariosNameIdx: index('scenarios_name_idx').on(table.name),
@@ -124,8 +122,7 @@ export const gameSessions = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
-      .default(sql`(unixepoch())`)
-      .$onUpdate(() => sql`(unixepoch())`),
+      .default(sql`(unixepoch())`),
   },
   (table) => ({
     gameSessionsScenarioIdx: index('game_sessions_scenario_idx').on(
@@ -228,8 +225,7 @@ export const userReviews = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
-      .default(sql`(unixepoch())`)
-      .$onUpdate(() => sql`(unixepoch())`),
+      .default(sql`(unixepoch())`),
   },
   (table) => ({
     unq: unique().on(table.scenarioId, table.userId),

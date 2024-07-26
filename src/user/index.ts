@@ -33,6 +33,16 @@ user
     const res = await db.insert(users).values(user);
     return c.json(res);
   })
+  .post('/:id', async (c) => {
+    const db = drizzle(c.env.DB);
+    const id = await c.req.param('id');
+    const updatedData = await c.req.json<typeof users.$inferInsert>();
+    const res = await db
+      .update(users)
+      .set({ ...updatedData, updatedAt: new Date() })
+      .where(eq(users.id, id));
+    return c.json(res);
+  })
   .delete('/:id', async (c) => {
     const db = drizzle(c.env.DB);
     const id = await c.req.param('id');
