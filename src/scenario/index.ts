@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { scenarios } from '../../db/schema';
 import { buildWhereClause, SearchCondition } from '../SQLCondition';
+import { withUpdatedAt } from '../dbUtils';
 
 const scenario = new Hono<{ Bindings: { DB: D1Database } }>();
 
@@ -39,7 +40,7 @@ scenario
     const updatedData = await c.req.json<typeof scenarios.$inferInsert>();
     const res = await db
       .update(scenarios)
-      .set({ ...updatedData, updatedAt: new Date() })
+      .set(withUpdatedAt(updatedData))
       .where(eq(scenarios.id, id));
     return c.json(res);
   })
