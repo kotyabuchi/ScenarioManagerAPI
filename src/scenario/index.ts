@@ -3,13 +3,15 @@ import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
 import { scenarios } from '../../db/schema';
 import { buildWhereClause, SearchCondition } from '../SQLCondition';
-import { withUpdatedAt } from '../utils';
+import { parseNumber, withUpdatedAt } from '../utils';
 
 const scenario = new Hono<{ Bindings: { DB: D1Database } }>();
 
 scenario
   .get('/', async (c) => {
-    const { name, id } = await c.req.query();
+    const { name, id, limit: limitStr } = await c.req.query();
+    const limit = parseNumber(limitStr);
+
     const db = drizzle(c.env.DB);
 
     const conditions: SearchCondition<typeof scenarios> = {};
@@ -19,7 +21,12 @@ scenario
 
     const whereClause = buildWhereClause(scenarios, conditions);
 
-    const result = await db.select().from(scenarios).where(whereClause);
+    const result = await db
+      .select()
+      .from(scenarios)
+      .where(whereClause)
+      .limit(limit)
+      .orderBy(scenarios.name);
     return c.json(result);
   })
   .get('/:id', async (c) => {
