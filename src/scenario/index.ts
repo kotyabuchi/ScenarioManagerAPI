@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/d1';
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
-import { scenarios } from '../../db/schema';
+import { scenarios, scenarioTags } from '../../db/schema';
 import { buildWhereClause, SearchCondition } from '../SQLCondition';
 import { parseNumber, withUpdatedAt } from '../utils';
 
@@ -25,6 +25,7 @@ scenario
       .select()
       .from(scenarios)
       .where(whereClause)
+      .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId))
       .limit(limit)
       .orderBy(scenarios.name);
     return c.json(result);
@@ -32,7 +33,11 @@ scenario
   .get('/:id', async (c) => {
     const db = drizzle(c.env.DB);
     const id = await c.req.param('id');
-    const res = await db.select().from(scenarios).where(eq(scenarios.id, id));
+    const res = await db
+      .select()
+      .from(scenarios)
+      .where(eq(scenarios.id, id))
+      .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId));
     return c.json(res);
   })
   .post('/', async (c) => {
