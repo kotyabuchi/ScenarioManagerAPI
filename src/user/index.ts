@@ -37,8 +37,8 @@ user
   })
   .post('/', async (c) => {
     const db = drizzle(c.env.DB);
-    const user = await c.req.json<typeof users.$inferInsert>();
-    const res = await db.insert(users).values(user);
+    const newData = await c.req.json<typeof users.$inferInsert>();
+    const res = await db.insert(users).values(newData);
     return c.json(res);
   })
   .post('/:id', async (c) => {

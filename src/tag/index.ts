@@ -9,3 +9,5 @@ tag.get('/', async (c) => {
   const result = await db.select().from(tags);
   return c.json(result);
 });
+
+export default tag;

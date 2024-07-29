@@ -42,8 +42,8 @@ scenario
   })
   .post('/', async (c) => {
     const db = drizzle(c.env.DB);
-    const user = await c.req.json<typeof scenarios.$inferInsert>();
-    const res = await db.insert(scenarios).values(user);
+    const newData = await c.req.json<typeof scenarios.$inferInsert>();
+    const res = await db.insert(scenarios).values(newData);
     return c.json(res);
   })
   .post('/:id', async (c) => {
