@@ -9,7 +9,7 @@ const app = new Hono<{ Bindings: { DB: D1Database } }>();
 app
   .route('users', user)
   .route('scenarios', scenario)
-  .route('tag', tag)
-  .route('gameSession', gameSession);
+  .route('tags', tag)
+  .route('sessions', gameSession);
 
 export default app;
