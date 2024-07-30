@@ -9,6 +9,18 @@ const user = new Hono<{ Bindings: { DB: D1Database } }>();
 
 user
   .get('/', async (c) => {
+    const { limit: limitStr } = await c.req.query();
+    const limit = parseNumber(limitStr);
+
+    const db = drizzle(c.env.DB);
+    const res = await db
+      .select()
+      .from(users)
+      .limit(limit)
+      .orderBy(users.nickname);
+    return c.json(res);
+  })
+  .get('/search', async (c) => {
     const { nickname, username, id, limit: limitStr } = await c.req.query();
     const limit = parseNumber(limitStr);
 

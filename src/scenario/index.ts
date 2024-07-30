@@ -9,6 +9,20 @@ const scenario = new Hono<{ Bindings: { DB: D1Database } }>();
 
 scenario
   .get('/', async (c) => {
+    const { limit: limitStr } = await c.req.query();
+    const limit = parseNumber(limitStr);
+
+    const db = drizzle(c.env.DB);
+
+    const result = await db
+      .select()
+      .from(scenarios)
+      .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId))
+      .limit(limit)
+      .orderBy(scenarios.name);
+    return c.json(result);
+  })
+  .get('/search', async (c) => {
     const { name, id, limit: limitStr } = await c.req.query();
     const limit = parseNumber(limitStr);
 
