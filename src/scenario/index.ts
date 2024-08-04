@@ -9,22 +9,31 @@ const scenario = new Hono<{ Bindings: { DB: D1Database } }>();
 
 scenario
   .get('/', async (c) => {
-    const { limit: limitStr } = await c.req.query();
-    const limit = parseNumber(limitStr);
+    const { limit: limitStr, offset: offsetStr } = await c.req.query();
+    const limit = parseNumber(limitStr) || 100;
+    const offset = parseNumber(offsetStr);
 
     const db = drizzle(c.env.DB);
 
-    const result = await db
+    const res = await db
       .select()
       .from(scenarios)
       .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId))
       .limit(limit)
+      .offset(offset)
       .orderBy(scenarios.name);
-    return c.json(result);
+
+    return c.json(res);
   })
   .get('/search', async (c) => {
-    const { name, id, limit: limitStr } = await c.req.query();
-    const limit = parseNumber(limitStr);
+    const {
+      name,
+      id,
+      limit: limitStr,
+      offset: offsetStr,
+    } = await c.req.query();
+    const limit = parseNumber(limitStr) || 100;
+    const offset = parseNumber(offsetStr);
 
     const db = drizzle(c.env.DB);
 
@@ -35,14 +44,16 @@ scenario
 
     const whereClause = buildWhereClause(scenarios, conditions);
 
-    const result = await db
+    const res = await db
       .select()
       .from(scenarios)
       .where(whereClause)
       .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId))
       .limit(limit)
+      .offset(offset)
       .orderBy(scenarios.name);
-    return c.json(result);
+
+    return c.json(res);
   })
   .get('/:id', async (c) => {
     const db = drizzle(c.env.DB);
