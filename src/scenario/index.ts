@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/d1';
 import { Hono } from 'hono';
 import { eq, sql } from 'drizzle-orm';
-import { scenarios, scenarioTags, tags } from '../../db/schema';
+import { gameSessions, scenarios, scenarioTags, tags } from '../../db/schema';
 import { buildWhereClause, SearchCondition } from '../SQLCondition';
 import { parseNumber, withUpdatedAt } from '../utils';
 import PerformanceMonitor from '../PerformanceMonitor';
@@ -178,12 +178,51 @@ scenario
   .get('/:id', async (c) => {
     const db = drizzle(c.env.DB);
     const id = await c.req.param('id');
-    const res = await db
-      .select()
+    const res = await db.select().from(scenarios).where(eq(scenarios.id, id));
+    return c.json(res);
+  })
+  .get('/withtag/:id', async (c) => {
+    const db = drizzle(c.env.DB);
+    const id = await c.req.param('id');
+
+    const query = db
+      .select({
+        id: scenarios.id,
+        name: scenarios.name,
+        author: scenarios.author,
+        description: scenarios.description,
+        shortDescription: scenarios.shortDescription,
+        scenarioImage: scenarios.scenarioImage,
+        minPlayer: scenarios.minPlayer,
+        maxPlayer: scenarios.maxPlayer,
+        minPlaytime: scenarios.minPlaytime,
+        maxPlaytime: scenarios.maxPlaytime,
+        handoutType: scenarios.handoutType,
+        distributeUrl: scenarios.distributeUrl,
+        createdById: scenarios.createdById,
+        createdAt: scenarios.createdAt,
+        updatedAt: scenarios.updatedAt,
+        tagsJson:
+          sql<string>`json_group_array(json_object('name', ${tags.name}, 'color', ${tags.color}))`.as(
+            'tags_json'
+          ),
+      })
       .from(scenarios)
       .where(eq(scenarios.id, id))
-      .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId));
-    return c.json(res);
+      .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId))
+      .leftJoin(tags, eq(scenarioTags.tagId, tags.id))
+      .groupBy(scenarios.id)
+      .orderBy(scenarios.name);
+
+    // クエリの実行
+    const results = await query.all();
+
+    const processedResults = results.map(({ tagsJson, ...rest }) => ({
+      ...rest,
+      tags: JSON.parse(tagsJson).filter((tag: any) => tag.name !== null),
+    }));
+
+    return c.json(processedResults);
   })
   .post('/', async (c) => {
     const db = drizzle(c.env.DB);
