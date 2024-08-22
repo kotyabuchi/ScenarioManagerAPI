@@ -4,5 +4,5 @@ compatibility_date = "2024-07-21"
 [[d1_databases]]
 binding = "DB" # i.e. available in your Worker on env.DB
 database_name = "scenario-manager-db"
-database_id = "fc2f2416-acaf-404e-a5e2-9155bb0487ca"
+database_id = "257bbbe3-4a6d-4d4f-b2fb-694f0a5b0125"
 migrations_dir = "drizzle/migrations"

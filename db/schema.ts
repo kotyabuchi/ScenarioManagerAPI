@@ -84,10 +84,10 @@ export const scenarioTags = sqliteTable(
   {
     scenarioId: text('scenario_id')
       .notNull()
-      .references(() => scenarios.id),
+      .references(() => scenarios.id, { onDelete: 'cascade' }),
     tagId: text('tag_id')
       .notNull()
-      .references(() => tags.id),
+      .references(() => tags.id, { onDelete: 'cascade' }),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.scenarioId, table.tagId] }),
@@ -110,7 +110,7 @@ export const gameSessions = sqliteTable(
       .$defaultFn(() => crypto.randomUUID()),
     scenarioId: text('scenario_id')
       .notNull()
-      .references(() => scenarios.id),
+      .references(() => scenarios.id, { onDelete: 'cascade' }),
     sessionPhase: text('session_phase', {
       enum: Object.values(SessionPhase) as [string, ...string[]],
     })
@@ -136,7 +136,7 @@ export const sessionParticipants = sqliteTable(
   {
     sessionId: text('session_id')
       .notNull()
-      .references(() => gameSessions.id),
+      .references(() => gameSessions.id, { onDelete: 'cascade' }),
     userId: text('user_id')
       .notNull()
       .references(() => users.id),
@@ -164,7 +164,7 @@ export const gameSchedules = sqliteTable(
       .notNull()
       .unique()
       .primaryKey()
-      .references(() => gameSessions.id),
+      .references(() => gameSessions.id, { onDelete: 'cascade' }),
     scheduleDate: integer('schedule_date', { mode: 'timestamp' }).notNull(),
     schedulePhase: text('schedule_phase', {
       enum: Object.values(SchedulePhase) as [string, ...string[]],
@@ -187,7 +187,7 @@ export const videoLinks = sqliteTable(
       .$defaultFn(() => crypto.randomUUID()),
     scenarioId: text('scenario_id')
       .notNull()
-      .references(() => scenarios.id),
+      .references(() => scenarios.id, { onDelete: 'cascade' }),
     sessionId: text('session_id')
       .notNull()
       .references(() => gameSessions.id),
@@ -215,7 +215,7 @@ export const userReviews = sqliteTable(
       .references(() => users.id),
     scenarioId: text('scenario_id')
       .notNull()
-      .references(() => scenarios.id),
+      .references(() => scenarios.id, { onDelete: 'cascade' }),
     sessionId: text('session_id').references(() => gameSessions.id),
     openComment: text('open_comment'),
     spoilerComment: text('spoiler_comment'),
@@ -243,10 +243,10 @@ export const userScenarioPreferences = sqliteTable(
   {
     scenarioId: text('scenario_id')
       .notNull()
-      .references(() => scenarios.id),
+      .references(() => scenarios.id, { onDelete: 'cascade' }),
     userId: text('user_id')
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, { onDelete: 'cascade' }),
     sessionId: text('session_id').references(() => gameSessions.id),
     isPlayed: integer('is_played', { mode: 'boolean' }).notNull(),
     isWatched: integer('is_watched', { mode: 'boolean' }).notNull(),
