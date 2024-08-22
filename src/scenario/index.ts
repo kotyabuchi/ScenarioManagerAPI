@@ -245,6 +245,15 @@ scenario
     const id = await c.req.param('id');
     const res = await db.delete(scenarios).where(eq(scenarios.id, id));
     return c.json(res);
+  })
+  .get('/:scenario_id/sessions', async (c) => {
+    const db = drizzle(c.env.DB);
+    const scenarioId = await c.req.param('scenario_id');
+    const result = await db
+      .select()
+      .from(gameSessions)
+      .where(eq(gameSessions.scenarioId, scenarioId));
+    return c.json(result);
   });
 
 export default scenario;
