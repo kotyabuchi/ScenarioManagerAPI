@@ -1,9 +1,10 @@
 import { drizzle } from 'drizzle-orm/d1';
 import { Hono } from 'hono';
-import { eq } from 'drizzle-orm';
-import { scenarios, scenarioTags } from '../../db/schema';
+import { eq, sql } from 'drizzle-orm';
+import { scenarios, scenarioTags, tags } from '../../db/schema';
 import { buildWhereClause, SearchCondition } from '../SQLCondition';
 import { parseNumber, withUpdatedAt } from '../utils';
+import PerformanceMonitor from '../PerformanceMonitor';
 
 const scenario = new Hono<{ Bindings: { DB: D1Database } }>();
 
@@ -15,15 +16,18 @@ scenario
 
     const db = drizzle(c.env.DB);
 
-    const res = await db
+    const query = db
       .select()
       .from(scenarios)
-      .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId))
+      .groupBy(scenarios.id)
+      .orderBy(scenarios.name)
       .limit(limit)
-      .offset(offset)
-      .orderBy(scenarios.name);
+      .offset(offset);
 
-    return c.json(res);
+    // クエリの実行
+    const results = await query.all();
+
+    return c.json(results);
   })
   .get('/search', async (c) => {
     const {
@@ -44,16 +48,132 @@ scenario
 
     const whereClause = buildWhereClause(scenarios, conditions);
 
-    const res = await db
+    const query = db
       .select()
       .from(scenarios)
       .where(whereClause)
-      .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId))
+      .groupBy(scenarios.id)
+      .orderBy(scenarios.name)
       .limit(limit)
-      .offset(offset)
-      .orderBy(scenarios.name);
+      .offset(offset);
 
-    return c.json(res);
+    // クエリの実行
+    const results = await query.all();
+
+    return c.json(results);
+  })
+  .get('/withtag', async (c) => {
+    const { limit: limitStr, offset: offsetStr } = await c.req.query();
+    const limit = parseNumber(limitStr) || 100;
+    const offset = parseNumber(offsetStr);
+
+    const db = drizzle(c.env.DB);
+
+    const query = db
+      .select({
+        id: scenarios.id,
+        name: scenarios.name,
+        author: scenarios.author,
+        description: scenarios.description,
+        shortDescription: scenarios.shortDescription,
+        scenarioImage: scenarios.scenarioImage,
+        minPlayer: scenarios.minPlayer,
+        maxPlayer: scenarios.maxPlayer,
+        minPlaytime: scenarios.minPlaytime,
+        maxPlaytime: scenarios.maxPlaytime,
+        handoutType: scenarios.handoutType,
+        distributeUrl: scenarios.distributeUrl,
+        createdById: scenarios.createdById,
+        createdAt: scenarios.createdAt,
+        updatedAt: scenarios.updatedAt,
+        tagsJson:
+          sql<string>`json_group_array(json_object('name', ${tags.name}, 'color', ${tags.color}))`.as(
+            'tags_json'
+          ),
+      })
+      .from(scenarios)
+      .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId))
+      .leftJoin(tags, eq(scenarioTags.tagId, tags.id))
+      .groupBy(scenarios.id)
+      .orderBy(scenarios.name)
+      .limit(limit)
+      .offset(offset);
+
+    // クエリの実行
+    const results = await query.all();
+
+    const processedResults = results.map(({ tagsJson, ...rest }) => ({
+      ...rest,
+      tags: JSON.parse(tagsJson).filter((tag: any) => tag.name !== null),
+    }));
+
+    return c.json(processedResults);
+  })
+  .get('/withtag/search', async (c) => {
+    const {
+      name,
+      id,
+      limit: limitStr,
+      offset: offsetStr,
+    } = await c.req.query();
+    const limit = parseNumber(limitStr) || 100;
+    const offset = parseNumber(offsetStr);
+
+    const monitor = new PerformanceMonitor();
+    const db = drizzle(c.env.DB, {
+      logger: {
+        logQuery: monitor.logQuery.bind(monitor),
+      },
+    });
+
+    const conditions: SearchCondition<typeof scenarios> = {};
+
+    if (name) conditions.name = { value: name, operator: 'like' };
+    if (id) conditions.id = { value: id, operator: 'eq' };
+
+    const whereClause = buildWhereClause(scenarios, conditions);
+
+    const query = db
+      .select({
+        id: scenarios.id,
+        name: scenarios.name,
+        author: scenarios.author,
+        description: scenarios.description,
+        shortDescription: scenarios.shortDescription,
+        scenarioImage: scenarios.scenarioImage,
+        minPlayer: scenarios.minPlayer,
+        maxPlayer: scenarios.maxPlayer,
+        minPlaytime: scenarios.minPlaytime,
+        maxPlaytime: scenarios.maxPlaytime,
+        handoutType: scenarios.handoutType,
+        distributeUrl: scenarios.distributeUrl,
+        createdById: scenarios.createdById,
+        createdAt: scenarios.createdAt,
+        updatedAt: scenarios.updatedAt,
+        tagsJson:
+          sql<string>`json_group_array(json_object('name', ${tags.name}, 'color', ${tags.color}))`.as(
+            'tags_json'
+          ),
+      })
+      .from(scenarios)
+      .where(whereClause)
+      .leftJoin(scenarioTags, eq(scenarios.id, scenarioTags.scenarioId))
+      .leftJoin(tags, eq(scenarioTags.tagId, tags.id))
+      .groupBy(scenarios.id)
+      .orderBy(scenarios.name)
+      .limit(limit)
+      .offset(offset);
+
+    // クエリの実行
+    const results = await query.all();
+
+    const processedResults = results.map(({ tagsJson, ...rest }) => ({
+      ...rest,
+      tags: JSON.parse(tagsJson).filter((tag: any) => tag.name !== null),
+    }));
+
+    monitor.end();
+    return c.json(processedResults);
   })
   .get('/:id', async (c) => {
     const db = drizzle(c.env.DB);
