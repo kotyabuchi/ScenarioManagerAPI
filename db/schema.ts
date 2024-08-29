@@ -6,7 +6,7 @@ import {
   unique,
   index,
 } from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   HandoutType,
   ParticipantStatus,
@@ -190,7 +190,7 @@ export const videoLinks = sqliteTable(
       .references(() => scenarios.id, { onDelete: 'cascade' }),
     sessionId: text('session_id')
       .notNull()
-      .references(() => gameSessions.id),
+      .references(() => gameSessions.id, { onDelete: 'cascade' }),
     videoUrl: text('video_url').notNull().unique(),
     createdById: text('created_by_id')
       .notNull()
@@ -261,3 +261,115 @@ export const userScenarioPreferences = sqliteTable(
     ).on(table.sessionId),
   })
 );
+
+export const userRelations = relations(users, ({ many }) => ({
+  participatedSessions: many(sessionParticipants),
+  keptSessions: many(gameSessions, { relationName: 'keeper' }),
+  reviews: many(userReviews),
+  videoLinks: many(videoLinks),
+  scenarioPreferences: many(userScenarioPreferences),
+}));
+
+export const scenarioRelations = relations(scenarios, ({ many }) => ({
+  sessions: many(gameSessions),
+  reviews: many(userReviews),
+  preferences: many(userScenarioPreferences),
+  videoLinks: many(videoLinks),
+}));
+
+export const gameSessionRelations = relations(
+  gameSessions,
+  ({ one, many }) => ({
+    scenario: one(scenarios, {
+      fields: [gameSessions.scenarioId],
+      references: [scenarios.id],
+    }),
+    keeper: one(users, {
+      fields: [gameSessions.keeperId],
+      references: [users.id],
+      relationName: 'keeper',
+    }),
+    participants: many(sessionParticipants),
+    reviews: many(userReviews),
+    preferences: many(userScenarioPreferences),
+    videoLinks: many(videoLinks),
+  })
+);
+
+export const sessionParticipantRelations = relations(
+  sessionParticipants,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [sessionParticipants.userId],
+      references: [users.id],
+    }),
+    session: one(gameSessions, {
+      fields: [sessionParticipants.sessionId],
+      references: [gameSessions.id],
+    }),
+  })
+);
+
+export const videoLinkRelations = relations(videoLinks, ({ one }) => ({
+  scenario: one(scenarios, {
+    fields: [videoLinks.scenarioId],
+    references: [scenarios.id],
+  }),
+  session: one(gameSessions, {
+    fields: [videoLinks.sessionId],
+    references: [gameSessions.id],
+  }),
+}));
+
+export const userReviewRelations = relations(userReviews, ({ one }) => ({
+  user: one(users, {
+    fields: [userReviews.userId],
+    references: [users.id],
+  }),
+  scenario: one(scenarios, {
+    fields: [userReviews.scenarioId],
+    references: [scenarios.id],
+  }),
+  session: one(gameSessions, {
+    fields: [userReviews.sessionId],
+    references: [gameSessions.id],
+  }),
+}));
+
+export const userScenarioPreferenceRelations = relations(
+  userScenarioPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userScenarioPreferences.userId],
+      references: [users.id],
+    }),
+    scenario: one(scenarios, {
+      fields: [userScenarioPreferences.scenarioId],
+      references: [scenarios.id],
+    }),
+    session: one(gameSessions, {
+      fields: [userScenarioPreferences.sessionId],
+      references: [gameSessions.id],
+    }),
+  })
+);
+
+export const schema = {
+  users,
+  scenarios,
+  gameSessions,
+  gameSchedules,
+  videoLinks,
+  sessionParticipants,
+  userReviews,
+  userScenarioPreferences,
+  tags,
+  scenarioTags,
+  userRelations,
+  scenarioRelations,
+  gameSessionRelations,
+  sessionParticipantRelations,
+  videoLinkRelations,
+  userReviewRelations,
+  userScenarioPreferenceRelations,
+};
