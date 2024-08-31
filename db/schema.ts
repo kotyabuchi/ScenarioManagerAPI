@@ -272,9 +272,25 @@ export const userRelations = relations(users, ({ many }) => ({
 
 export const scenarioRelations = relations(scenarios, ({ many }) => ({
   sessions: many(gameSessions),
+  scenarioTags: many(scenarioTags),
   reviews: many(userReviews),
   preferences: many(userScenarioPreferences),
   videoLinks: many(videoLinks),
+}));
+
+export const scenarioTagRelations = relations(scenarioTags, ({ one }) => ({
+  scenario: one(scenarios, {
+    fields: [scenarioTags.scenarioId],
+    references: [scenarios.id],
+  }),
+  tag: one(tags, {
+    fields: [scenarioTags.tagId],
+    references: [tags.id],
+  }),
+}));
+
+export const tagRelations = relations(tags, ({ many }) => ({
+  scenarioTags: many(scenarioTags),
 }));
 
 export const gameSessionRelations = relations(
@@ -367,6 +383,8 @@ export const schema = {
   scenarioTags,
   userRelations,
   scenarioRelations,
+  scenarioTagRelations,
+  tagRelations,
   gameSessionRelations,
   sessionParticipantRelations,
   videoLinkRelations,
