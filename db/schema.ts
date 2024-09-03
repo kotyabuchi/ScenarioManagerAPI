@@ -15,13 +15,14 @@ import {
   SchedulePhase,
   SessionPhase,
 } from './enum';
+import { createId } from '@paralleldrive/cuid2';
 
 export const users = sqliteTable(
   'users',
   {
     id: text('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => createId()),
     discordId: text('discord_id').notNull().unique(),
     username: text('user_name').notNull().unique(),
     nickname: text('nickname').notNull(),
@@ -50,7 +51,7 @@ export const scenarios = sqliteTable(
   {
     id: text('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => createId()),
     name: text('name').notNull(),
     author: text('author'),
     description: text('description'),
@@ -97,7 +98,7 @@ export const scenarioTags = sqliteTable(
 export const tags = sqliteTable('tags', {
   id: text('id')
     .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+    .$defaultFn(() => createId()),
   name: text('name').notNull().unique(),
   color: text('color'),
 });
@@ -107,7 +108,7 @@ export const gameSessions = sqliteTable(
   {
     id: text('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => createId()),
     scenarioId: text('scenario_id')
       .notNull()
       .references(() => scenarios.id, { onDelete: 'cascade' }),
